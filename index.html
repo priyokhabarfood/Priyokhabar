@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>প্রিয় খাবার - Cake Pizza Khichuri</title>
+<style>
+*{margin:0; padding:0; box-sizing:border-box; font-family:'Hind Siliguri', sans-serif;}
+body{background:#fff8f0;}
+.header{background:#e63946; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:99;}
+.logo{font-size:24px; font-weight:bold;}
+.cart-icon{position:relative; font-size:24px; cursor:pointer;}
+.cart-badge{background:yellow; color:#000; padding:2px 7px; border-radius:50%; font-size:12px; position:absolute; top:-8px; right:-8px;}
+.container{max-width:1200px; margin:auto; padding:20px;}
+.cat-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin:20px 0;}
+.cat-box{background:#fff; padding:20px; text-align:center; border-radius:15px; box-shadow:0 3px 10px rgba(0,0,0,0.1); cursor:pointer; transition:0.3s;}
+.cat-box:hover{transform:translateY(-3px); background:#ffe5e5;}
+.pro-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:15px;}
+.card{background:#fff; border-radius:15px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.1); cursor:pointer;}
+.card img{width:100%; height:180px; object-fit:cover;}
+.card-body{padding:12px;}
+.price{color:#e63946; font-weight:bold; font-size:18px;}
+.popup{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:999;}
+.popup-content{background:#fff; width:95%; max-width:550px; border-radius:15px; padding:20px; max-height:90vh; overflow-y:auto;}
+.close-btn{float:right; font-size:24px; cursor:pointer;}
+.btn{background:#e63946; color:#fff; padding:12px; border:none; width:100%; border-radius:8px; margin:5px 0; font-size:16px; cursor:pointer;}
+.cart-item{display:flex; gap:10px; margin:10px 0; padding:10px; border-bottom:1px solid #eee;}
+.total{text-align:right; font-size:20px; font-weight:bold; color:#e63946; margin:10px 0;}
+input, textarea{width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:8px;}
+.hidden{display:none;}
+.area-select-box{border:1.5px dashed #e63946; padding:12px; border-radius:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; margin:10px 0; background:#fff0f0;}
+.area-card{border:1px solid #eee; border-radius:10px; margin:10px 0; overflow:hidden;}
+.area-header{padding:12px; background:#ffe5e5; font-weight:bold; display:flex; justify-content:space-between;}
+.sub-list{padding:10px;}
+.sub-item{padding:10px; margin:5px 0; border:1px solid #eee; border-radius:8px; display:flex; justify-content:space-between; cursor:pointer;}
+.sub-item.active{border:2px solid #e63946; background:#ffe5e5;}
+.free{color:#fff; background:#25D366; padding:2px 8px; border-radius:12px; font-size:12px;}
+@media(min-width:768px){.pro-grid{grid-template-columns:repeat(4, 1fr);} .cat-grid{grid-template-columns:repeat(5, 1fr);}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🍰 প্রিয় খাবার</div>
+  <div class="cart-icon" onclick="openCart()">🛒<span class="cart-badge" id="cartCount">0</span></div>
+</div>
+
+<div class="container">
+  <h2 style="text-align:center; margin:20px 0;">ক্যাটাগরি সিলেক্ট করুন</h2>
+  <div class="cat-grid">
+    <div class="cat-box" onclick="filterCategory('cake')">🎂<p>কেক</p></div>
+    <div class="cat-box" onclick="filterCategory('pizza')">🍕<p>পিৎজা</p></div>
+    <div class="cat-box" onclick="filterCategory('chicken')">🍗<p>চিকেন ফ্রাই</p></div>
+    <div class="cat-box" onclick="filterCategory('fries')">🍟<p>ফ্রেন্স ফ্রাই</p></div>
+    <div class="cat-box" onclick="filterCategory('khichuri')">🍛<p>খিচুড়ি</p></div>
+  </div>
+  <div class="pro-grid" id="productGrid"></div>
+</div>
+
+<!-- Product Popup -->
+<div class="popup" id="productPopup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closePopup()">&times;</span>
+    <img id="popupImg" width="100%" style="border-radius:10px;">
+    <h3 id="popupTitle"></h3>
+    <p id="popupDesc"></p>
+    <p><b>দাম:</b> <span id="popupPrice" class="price"></span></p>
+    <button class="btn" onclick="addToCart()">🛒 Add to Cart</button>
+  </div>
+</div>
+
+<!-- Cart Popup -->
+<div class="popup" id="cartPopup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closeCart()">&times;</span>
+    <h3>আপনার কার্ট</h3>
+    <div id="cartItems"></div>
+    <div class="total">সাবটোটাল: ৳<span id="subTotal">0</span></div>
+    
+    <h3>ডেলিভারি এরিয়া</h3>
+    <div class="area-select-box" onclick="openAreaPopup()">
+      <span id="selectedAreaText">এরিয়া সিলেক্ট করুন</span>
+      <span>▼</span>
+    </div>
+    
+    <h3>আপনার তথ্য</h3>
+    <input id="custName" placeholder="আপনার পুরো নাম">
+    <input id="custPhone" placeholder="ফোন নম্বর">
+    <textarea id="custAddress" placeholder="বাসা/রোড নম্বর"></textarea>
+    
+    <div id="cakeNameBox" class="hidden">
+      <input id="cakeName" placeholder="কেকের উপর কি নাম লিখবেন?">
+    </div>
+    <textarea id="orderNote" placeholder="অন্য কোনো নোট"></textarea>
+    
+    <div class="total">মোট: ৳<span id="grandTotal">0</span></div>
+    <button class="btn" onclick="submitOrder()">✅ WhatsApp এ অর্ডার করুন</button>
+  </div>
+</div>
+
+<!-- Area Selection Popup -->
+<div class="popup" id="areaPopup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closeAreaPopup()">&times;</span>
+    <h3>ডেলিভারি এরিয়া সিলেক্ট করুন</h3>
+    <div id="areaList"></div>
+  </div>
+</div>
+
+<script>
+const WA_NUMBER = "8801648254708";
+
+const products = [
+  {id:1, cat:'cake', name:'চকলেট কেক', size:'1 পাউন্ড', price:650, img:'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500', desc:'প্রিমিয়াম চকলেট, ক্রিম, চেরি'},
+  {id:2, cat:'cake', name:'ভ্যানিলা কেক', size:'2 পাউন্ড', price:1200, img:'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=500', desc:'সফট স্পঞ্জ + ফ্রেশ ক্রিম'},
+  {id:3, cat:'pizza', name:'চিকেন পিৎজা', size:'10 ইঞ্চি', price:450, img:'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500', desc:'চিকেন, চিজ, ক্যাপসিকাম'},
+  {id:4, cat:'chicken', name:'চিকেন ফ্রাই', size:'6 পিস', price:350, img:'https://images.unsplash.com/photo-1562967914-608f82629710?w=500', desc:'ক্রিস্পি স্পাইসি চিকেন'},
+  {id:5, cat:'fries', name:'ফ্রেন্স ফ্রাই', size:'বড়', price:120, img:'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=500', desc:'ক্রিস্পি পটেটো ফ্রাই'},
+  // খিচুড়ি আইটেম
+  {id:6, cat:'khichuri', name:'খিচুড়ি', size:'মুরগী দিয়ে ফুল', price:250, img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500', desc:'বাসমতী চাল + দেশি মুরগী 1 পিস + ডিম + আচার'},
+  {id:7, cat:'khichuri', name:'খিচুড়ি', size:'গরু দিয়ে ফুল', price:280, img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500', desc:'বাসমতী চাল + গরুর গোস্ত 2 পিস + ডিম + আচার'},
+  {id:8, cat:'khichuri', name:'খিচুড়ি', size:'মুরগী দিয়ে হাফ', price:150, img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500', desc:'হাফ খিচুড়ি + মুরগী 1 পিস + ডিম'},
+  {id:9, cat:'khichuri', name:'খিচুড়ি', size:'গরু দিয়ে হাফ', price:170, img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500', desc:'হাফ খিচুড়ি + গরুর গোস্ত 1 পিস + ডিম'},
+  {id:10, cat:'khichuri', name:'ভুনা খিচুড়ি', size:'ফুল প্লেট', price:320, img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500', desc:'স্পেশাল মোরগ খিচুড়ি + মোরগের রোস্ট + ডিম + বোরহানি'}
+];
+
+const deliveryAreas = [
+  {main: 'সাভার', mainCharge: 70, sub: [
+    {name: 'সাভার বাসস্ট্যান্ড', charge: 70},
+    {name: 'সাভার ক্যান্টনমেন্ট', charge: 80},
+    {name: 'জাহাঙ্গীরনগর বিশ্ববিদ্যালয়', charge: 90},
+    {name: 'রেডিও কলোনি', charge: 70}
+  ]},
+  {main: 'নবিনগর', mainCharge: 50, sub: [
+    {name: 'নবিনগর বাসস্ট্যান্ড', charge: 50},
+    {name: 'EPZ গেইট', charge: 60},
+    {name: 'বাইপাইল', charge: 60}
+  ]},
+  {main: 'পল্লিবিদ্যুৎ', mainCharge: 50, sub: [
+    {name: 'পল্লিবিদ্যুৎ মোড়', charge: 50},
+    {name: 'আশুলিয়া', charge: 60}
+  ]},
+  {main: 'ধামরাই', mainCharge: 50, sub: [
+    {name: 'ধামরাই বাজার', charge: 50},
+    {name: 'কালামপুর', charge: 50}
+  ]},
+  {main: 'নয়ারহাট', mainCharge: 0, sub: [{name: 'নয়ারহাট', charge: 0}]},
+  {main: 'ইসলামপুর', mainCharge: 0, sub: [{name: 'ইসলামপুর', charge: 0}]}
+];
+
+let cart = [];
+let selectedProduct = {};
+let selectedDelivery = {name:'', charge:0};
+
+function filterCategory(cat){
+  let filtered = products.filter(p=> p.cat==cat);
+  document.getElementById('productGrid').innerHTML = filtered.map(p=>`
+    <div class="card" onclick="openPopup(${p.id})">
+      <img src="${p.img}">
+      <div class="card-body">
+        <div>${p.name} - ${p.size}</div>
+        <div class="price">৳${p.price}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openPopup(id){
+  selectedProduct = products.find(p=>p.id==id);
+  document.getElementById('popupImg').src = selectedProduct.img;
+  document.getElementById('popupTitle').innerText = selectedProduct.name + ' - ' + selectedProduct.size;
+  document.getElementById('popupDesc').innerText = selectedProduct.desc;
+  document.getElementById('popupPrice').innerText = '৳' + selectedProduct.price;
+  document.getElementById('productPopup').style.display = 'flex';
+}
+function closePopup(){document.getElementById('productPopup').style.display = 'none';}
+
+function addToCart(){
+  let exist = cart.find(c=>c.id==selectedProduct.id);
+  if(exist){ exist.qty++; } else { cart.push({...selectedProduct, qty:1}); }
+  updateCartCount();
+  alert('কার্টে যোগ হয়েছে!');
+  closePopup();
+}
+function updateCartCount(){document.getElementById('cartCount').innerText = cart.reduce((a,b)=>a+b.qty,0);}
+function openCart(){document.getElementById('cartPopup').style.display = 'flex'; renderCart();}
+function closeCart(){document.getElementById('cartPopup').style.display = 'none';}
+function openAreaPopup(){document.getElementById('areaPopup').style.display = 'flex'; loadAreaList();}
+function closeAreaPopup(){document.getElementById('areaPopup').style.display = 'none';}
+
+function loadAreaList(){
+  let html = '';
+  deliveryAreas.forEach(area=>{
+    html += `
+    <div class="area-card">
+      <div class="area-header">
+        <span>${area.main}</span>
+        <span>${area.mainCharge==0?'<span class="free">FREE</span>':'৳'+area.mainCharge}</span>
+      </div>
+      <div class="sub-list">
+        ${area.sub.map(sub=>`
+          <div class="sub-item" onclick="selectArea('${area.main} - ${sub.name}', ${sub.charge})">
+            <span>${sub.name}</span>
+            <span>${sub.charge==0?'<span class="free">FREE</span>':'৳'+sub.charge}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('areaList').innerHTML = html;
+}
+
+function selectArea(name, charge){
+  selectedDelivery = {name, charge};
+  document.getElementById('selectedAreaText').innerText = `${name} - ${charge==0?'FREE':'৳'+charge}`;
+  closeAreaPopup();
+  renderCart();
+}
+
+function renderCart(){
+  let html = '';
+  let subtotal = 0;
+  let hasCake = false;
+  cart.forEach((item,i)=>{
+    subtotal += item.price * item.qty;
+    if(item.cat=='cake') hasCake = true;
+    html += `
+    <div class="cart-item">
+      <img src="${item.img}" width="60" style="border-radius:8px;">
+      <div style="flex:1">
+        <div>${item.name} - ${item.size}</div>
+        <div>৳${item.price} x <input type="number" value="${item.qty}" min="1" style="width:50px" onchange="changeQty(${i}, this.value)"></div>
+      </div>
+      <button onclick="removeItem(${i})">❌</button>
+    </div>`;
+  });
+  document.getElementById('cakeNameBox').classList.toggle('hidden', !hasCake);
+  document.getElementById('cartItems').innerHTML = html || '<p>কার্ট খালি</p>';
+  document.getElementById('subTotal').innerText = subtotal;
+  let grandTotal = cart.length === 0 ? 0 : subtotal + selectedDelivery.charge;
+  document.getElementById('grandTotal').innerText = grandTotal;
+}
+
+function changeQty(i,val){ cart[i].qty = parseInt(val); renderCart(); updateCartCount(); }
+function removeItem(i){ cart.splice(i,1); updateCartCount(); renderCart(); }
+
+function submitOrder(){
+  if(cart.length==0){alert('কার্ট খালি!'); return;}
+  if(selectedDelivery.name==''){alert('ডেলিভারি এরিয়া সিলেক্ট করুন!'); return;}
+  let items = cart.map(c=>`${c.name} (${c.size}) x${c.qty} = ৳${c.price*c.qty}`).join('\n');
+  let cakeText = document.getElementById('cakeName').value ? `\nকেকের নাম: ${document.getElementById('cakeName').value}` : '';
+  let msg = `🔥 নতুন অর্ডার 🔥\n\nনাম: ${custName.value}\nফোন: ${custPhone.value}\nঠিকানা: ${custAddress.value}\nডেলিভারি: ${selectedDelivery.name} - ${selectedDelivery.charge==0?'FREE':'৳'+selectedDelivery.charge}${cakeText}\nনোট: ${orderNote.value}\n\nঅর্ডার:\n${items}\n\nমোট: ৳${document.getElementById('grandTotal').innerText}`;
+  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`);
+  alert('অর্ডার পাঠানো হয়েছে! আমরা 10 মিনিটের মধ্যে কল দিব ❤️');
+  cart = []; updateCartCount(); closeCart();
+}
+
+// প্রথমে কেক দেখাবে
+filterCategory('cake');
+</script>
+</body>
+</html>
